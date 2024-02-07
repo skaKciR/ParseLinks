@@ -32,26 +32,6 @@ namespace Parse.Domain
 
         }
 
-        public async Task<List<string>> GetAnotherUrls()
-        {
-            using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
-            connection.Open();
-
-            string sql = "SELECT url FROM anotherurls";
-            NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
-            using NpgsqlDataReader reader = cmd.ExecuteReader();
-            List<string> AnotherLinks = new List<string>();
-
-            while (reader.Read())
-            {
-                AnotherLinks.Add(reader[0].ToString());
-            }
-
-           // await ClearAnotherUrls();
-            return AnotherLinks;
-
-        }
-
         public async Task InsertUrlEntity(URLEntity urlEntity)
         {
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
@@ -69,12 +49,26 @@ namespace Parse.Domain
             try
             {
                 await cmd.ExecuteNonQueryAsync();
-               // Console.WriteLine("Вставил новую запаршенную ссылку " + urlEntity.URL + " в " + DateTime.Now);
+                // Console.WriteLine("Вставил новую запаршенную ссылку " + urlEntity.URL + " в " + DateTime.Now);
 
             }
             catch
             {
-               // Console.WriteLine("Небольшая заминочка на ссылке: " + urlEntity.URL);
+                // Console.WriteLine("Небольшая заминочка на ссылке: " + urlEntity.URL);
+            }
+        }
+
+        public async Task InsertAnotherLink(List<string> urls)
+        {
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            con.Open();
+
+            foreach (string url in urls)
+            {
+                string sql = "INSERT INTO anotherurls (url) VALUES (@url) ON CONFLICT DO NOTHING ";
+                using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("url", url);
+                await cmd.ExecuteNonQueryAsync();
             }
         }
 
@@ -98,12 +92,69 @@ namespace Parse.Domain
             }
         }
 
-        public async Task<bool> Contains(string url)
+        public async Task<List<string>> GetAnotherUrls()
+        {
+            using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+            connection.Open();
+
+            string sql = "SELECT url FROM anotherurls";
+            NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
+            using NpgsqlDataReader reader = cmd.ExecuteReader();
+            List<string> AnotherLinks = new List<string>();
+
+            while (reader.Read())
+            {
+                AnotherLinks.Add(reader[0].ToString());
+            }
+
+            // await ClearAnotherUrls();
+            return AnotherLinks;
+
+        }
+
+        public async Task ClearAnotherUrls()
+        {
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            con.Open();
+            string sql = "DELETE FROM anotherurls";
+            using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<bool> ContainsUrlandhtml(string url)
         {
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
             con.Open();
 
             string sql = "SELECT url FROM urlandhtml WHERE url=@url";
+
+            using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("url", url);
+
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            if (reader.Read())
+            {
+                return reader[0].ToString() == url;
+            }
+            else return false;
+        }
+
+        public async Task InsertUnaccessedUrl(string url)
+        {
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            con.Open();
+            string sql = "INSERT INTO unaccessedurl (url) VALUES (@url) ON CONFLICT DO NOTHING ";
+            using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("url", url);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<bool> ContainsUnaccessedUrll(string url)
+        {
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            con.Open();
+
+            string sql = "SELECT url FROM unaccessedurl WHERE url=@url";
 
             using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("url", url);
@@ -155,29 +206,6 @@ namespace Parse.Domain
             }
 
             return result;
-        }
-
-        public async Task InsertAnotherLink(List<string> urls)
-        {
-            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
-            con.Open();
-
-            foreach (string url in urls)
-            {
-                string sql = "INSERT INTO anotherurls (url) VALUES (@url) ON CONFLICT DO NOTHING ";
-                using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("url", url);
-                await cmd.ExecuteNonQueryAsync();
-            }
-        }
-
-        public async Task ClearAnotherUrls()
-        {
-            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
-            con.Open();
-            string sql = "DELETE FROM anotherurls";
-            using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
-            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

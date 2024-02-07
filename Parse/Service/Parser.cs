@@ -81,7 +81,7 @@ namespace Parse.Service
         {
             try
             {
-                if (await dbProvider.Contains(newUrl))
+                if (await dbProvider.ContainsUrlandhtml(newUrl))
                 {
                     await dbProvider.DeleteAnotherUrl(newUrl);
                     return;
@@ -96,7 +96,10 @@ namespace Parse.Service
                 var currentUri = new Uri(urlEntity.URL);
 
                 var (Left, Top) = Console.GetCursorPosition();
-                Console.WriteLine("Паршу " + currentUri.ToString());
+                lock (consoleLock)
+                {
+                    Console.WriteLine("Паршу " + currentUri.ToString());
+                }
 
                 robotsList = await dbProvider.InsertRobots(new Robots(currentUri.Host));
 
@@ -132,8 +135,8 @@ namespace Parse.Service
                             else
                                 newUrlString = "https://" + currentUri.Host + newUrlString;
                         }
-                        if (
-                             !newUrlString.StartsWith("whatsapp://") && !newUrlString.StartsWith("viber://")
+                        if (!newUrlString.StartsWith("#") && !newUrlString.StartsWith("mailto:")
+                            && !newUrlString.StartsWith("whatsapp://") && !newUrlString.StartsWith("viber://")
                             && !newUrlString.StartsWith("android-app") && !newUrlString.Contains(".css")
                             && !newUrlString.Contains("twitter") && !newUrlString.Contains("facebook")
                             && !newUrlString.StartsWith("tg://") && !newUrlString.EndsWith(".woff2")
@@ -154,16 +157,22 @@ namespace Parse.Service
                                     AnotherLinks.Add(newUrlString);
                                 }
                             }
-                            catch (Exception ex)
+                            catch
                             {
-
+                                //lock (consoleLock)
+                                //{
+                                //    Console.WriteLine($"Ошибка в {newUrlString} при создании URI после парсинга");
+                                //}
                             }
                         }
                         urlEntity.Links = Links;
                     }
-                    catch (Exception ex)
+                    catch
                     {
-
+                        //lock (consoleLock)
+                        //{
+                        //    Console.WriteLine($"Ошибка в {href} при обработке после парсинга");
+                        //}
                     }
                 }
 
@@ -189,10 +198,11 @@ namespace Parse.Service
                 lock (consoleLock)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"Ошибочка с ссылкой:{newUrl} " + ex.Message);
+                    Console.WriteLine($"Ошибочка с ссылкой: {newUrl} " + ex.Message);
                     Console.ForegroundColor = ConsoleColor.White;
                 }
                 await dbProvider.DeleteAnotherUrl(newUrl);
+                await dbProvider.InsertUnaccessedUrl(newUrl);
             }
         }
     }

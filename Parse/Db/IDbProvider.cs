@@ -25,6 +25,11 @@ namespace Parse.Domain
 
         Task DeleteAnotherUrl(string url);
 
-        Task<bool> Contains(string url);
+        Task<bool> ContainsUrlandhtml(string url);
+
+        Task<bool> ContainsUnaccessedUrll(string url);
+
+        Task InsertUnaccessedUrl(string url);
+
     }
 }
