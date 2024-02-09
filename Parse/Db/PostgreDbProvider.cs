@@ -27,7 +27,7 @@ namespace Parse.Domain
             using NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
             reader.Read();
-
+            connection.Close();
             return reader[0].ToString();
 
         }
@@ -49,6 +49,7 @@ namespace Parse.Domain
             try
             {
                 await cmd.ExecuteNonQueryAsync();
+                con.Close();
                 // Console.WriteLine("Вставил новую запаршенную ссылку " + urlEntity.URL + " в " + DateTime.Now);
 
             }
@@ -68,8 +69,9 @@ namespace Parse.Domain
                 string sql = "INSERT INTO anotherurls (url) VALUES (@url) ON CONFLICT DO NOTHING ";
                 using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("url", url);
-                await cmd.ExecuteNonQueryAsync();
+                await cmd.ExecuteNonQueryAsync();              
             }
+            con.Close();
         }
 
         public async Task DeleteAnotherUrl(string url)
@@ -85,6 +87,7 @@ namespace Parse.Domain
             try
             {
                 await cmd.ExecuteNonQueryAsync();
+                con.Close();
             }
             catch
             {
@@ -99,14 +102,14 @@ namespace Parse.Domain
 
             string sql = "SELECT url FROM anotherurls";
             NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
-            using NpgsqlDataReader reader = cmd.ExecuteReader();
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
             List<string> AnotherLinks = new List<string>();
 
             while (reader.Read())
             {
                 AnotherLinks.Add(reader[0].ToString());
             }
-
+            connection.Close();
             // await ClearAnotherUrls();
             return AnotherLinks;
 
@@ -119,6 +122,7 @@ namespace Parse.Domain
             string sql = "DELETE FROM anotherurls";
             using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
             await cmd.ExecuteNonQueryAsync();
+            con.Close();
         }
 
         public async Task<bool> ContainsUrlandhtml(string url)
@@ -132,11 +136,17 @@ namespace Parse.Domain
             cmd.Parameters.AddWithValue("url", url);
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+
             if (reader.Read())
             {
+                con.Close();
                 return reader[0].ToString() == url;
             }
-            else return false;
+            else
+            {
+                con.Close();
+                return false;
+            }
         }
 
         public async Task InsertUnaccessedUrl(string url)
@@ -147,6 +157,7 @@ namespace Parse.Domain
             using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("url", url);
             await cmd.ExecuteNonQueryAsync();
+            con.Close();
         }
 
         public async Task<bool> ContainsUnaccessedUrll(string url)
@@ -160,11 +171,17 @@ namespace Parse.Domain
             cmd.Parameters.AddWithValue("url", url);
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+
             if (reader.Read())
             {
+                con.Close();
                 return reader[0].ToString() == url;
             }
-            else return false;
+            else
+            {
+                con.Close(); 
+                return false;
+            }
         }
 
         public async Task<List<Robots>> InsertRobots(Robots robots)
@@ -181,10 +198,12 @@ namespace Parse.Domain
             try
             {
                 await cmd.ExecuteNonQueryAsync();
+                con.Close();
                 return await GetRobots();
             }
             catch
             {
+                con.Close();
                 return await GetRobots();
             }
         }
@@ -200,11 +219,12 @@ namespace Parse.Domain
             using NpgsqlCommand cmd = new NpgsqlCommand(sql, con);
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+
             while (reader.Read())
             {
                 result.Add(new Robots(reader[0].ToString(), reader[1].ToString()));
             }
-
+            con.Close();
             return result;
         }
     }

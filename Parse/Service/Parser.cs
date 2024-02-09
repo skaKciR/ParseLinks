@@ -98,6 +98,7 @@ namespace Parse.Service
                 var (Left, Top) = Console.GetCursorPosition();
                 lock (consoleLock)
                 {
+                    (Left, Top) = Console.GetCursorPosition();
                     Console.WriteLine("Паршу " + currentUri.ToString());
                 }
 
