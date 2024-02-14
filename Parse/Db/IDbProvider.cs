@@ -31,5 +31,7 @@ namespace Parse.Domain
 
         Task InsertUnaccessedUrl(string url);
 
+        Task Truncate();
+
     }
 }
