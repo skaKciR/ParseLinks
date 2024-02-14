@@ -24,17 +24,27 @@ namespace Parse
             string connectionString = "Server=localhost; port=5432; user id=postgres; password=sa; database=JanuaryTaskDB;";
             Parser parser = new Parser(new PostgreDbProvider(connectionString));
 
+
             Console.WriteLine("1. First parse");
             Console.WriteLine("2. Another links parse");
+            Console.WriteLine("3. Clear DB");
             string choose = Console.ReadLine();
 
             if (choose == "1")
             {
                 await parser.Parse(urls);
             }
-            else
+            else if( choose == "2") 
             {
                 await parser.Parse();
+            }
+            else
+            {
+               IDbProvider dbProvider = new PostgreDbProvider(connectionString);
+               await dbProvider.Truncate();
+               Console.ForegroundColor = ConsoleColor.Red;
+               Console.WriteLine("База данных успешно очищена.");
+               Console.ForegroundColor = ConsoleColor.White;
             }
         }
     }

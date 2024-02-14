@@ -26,7 +26,9 @@ namespace Parse.Service
 
         public static string GetTextContent(string html)
         {
-            return Regex.Replace(html, "<.*?>", "");
+            string firstString = (Regex.Replace(html, @"<script[^>]*>[\s\S]*?</script>|<style[^>]*>[\s\S]*?</style>|<.*?>", " "));
+            string secondString = Regex.Replace(firstString, @"<[^>]*>", " ");
+            return (Regex.Replace(secondString, @"\s+", " "));
         }
     }
 }

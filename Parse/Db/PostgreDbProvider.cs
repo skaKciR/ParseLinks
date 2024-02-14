@@ -227,5 +227,16 @@ namespace Parse.Domain
             con.Close();
             return result;
         }
+
+        public async Task Truncate()
+        {
+            using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+            connection.Open();
+
+            string sql = "TRUNCATE anotherurls, robots,unaccessedurl, urlandhtml";
+            NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            connection.Close();
+        }
     }
 }
